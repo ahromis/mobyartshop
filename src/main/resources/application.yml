@@ -50,3 +50,26 @@ datasource:
       show_sql: true
       format_sql: true
       dialect: org.hibernate.dialect.MySQLDialect
+---
+spring:
+  profiles: https
+server:
+  port: 8443
+  ssl:
+     key-store: file:/run/secrets/keystore.jks
+     key-store-password: ${KEY_STORE_PASSWORD}
+     key-password: ${KEY_PASSWORD}
+datasource:
+  mobyartshop:
+    url: jdbc:postgresql://database:5432/mobystore
+    username: gordonuser
+    password: gordonpassword
+    driverClassName: org.postgresql.Driver
+    defaultSchema:
+    maxPoolSize: 20
+    hibernate:
+      hbm2ddl.method: update
+      show_sql: true
+      format_sql: true
+      dialect: org.hibernate.dialect.PostgreSQLDialect
+-

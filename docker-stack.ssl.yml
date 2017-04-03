@@ -1,0 +1,64 @@
+version: "3.1"
+
+services:
+  database:
+    image: mobystore_db
+    environment:
+      POSTGRES_USER: gordonuser
+      POSTGRES_PASSWORD: gordonpassword
+      POSTGRES_DB: mobystore
+    networks:
+     - back-tier
+
+  appserver:
+    image: mobystore_app
+    ports:
+      - "8443:8443"
+    networks:
+      - front-tier
+      - back-tier
+    deploy:
+      replicas: 2
+      update_config:
+        parallelism: 2
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      labels:
+        - com.docker.ucp.mesh.http.1=external_route=http://${DOMAIN},redirect=https://${DOMAIN}
+        - com.docker.ucp.mesh.http.8443=external_route=sni://${DOMAIN},internal_port=8443
+    secrets:
+        - source: mobyartshop_keystore.jks_v1
+          target: keystore.jks
+          mode: 0400
+        - source: mobyartshop_keystore-password.txt_v1
+          target: keystore-password.txt
+          mode: 0400
+        - source: mobyartshop-password.txt_v1
+          target: key-password.txt
+          mode: 0400
+
+  visualizer:
+    image: dockersamples/visualizer:stable
+    ports:
+      - "8001:8080"
+    stop_grace_period: 1m30s
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+    deploy:
+      placement:
+        constraints: [node.role == manager]
+
+networks:
+  front-tier:
+  back-tier:
+
+secrets:
+  mobyartshop_keystore.jks_v1:
+    external: true
+  mobyartshop_keystore-password.txt_v1:
+    external: true
+  mobyartshop-password.txt_v1:
+    external: true
